@@ -29,15 +29,9 @@ export default async function (req, res, next) {
           .json({ message: "Refresh Token이 정상적이지 않습니다." });
       }
 
-      const userInfo = await prisma.refreshToken.findFirst({
-        where: { token: refreshToken },
+      const userInfo = await prisma.users.findFirst({
+        where: { userId: payload.userId },
       });
-
-      if (!userInfo) {
-        return res.status(419).json({
-          message: "Refresh Token의 정보가 서버에 존재하지 않습니다.",
-        });
-      }
 
       const newAccessToken = jwt.sign(
         { userId: userInfo.userId },
