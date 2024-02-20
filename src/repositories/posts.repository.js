@@ -10,7 +10,6 @@ export class PostsRepository {
       select: {
         resumeId: true,
         title: true,
-        content: true,
         status: true,
         user: {
           select: {

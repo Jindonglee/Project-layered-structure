@@ -25,7 +25,7 @@ export class UsersController {
       );
       res.cookie("authorization", `Bearer ${tokens.accessToken}`);
       res.cookie("refreshToken", tokens.refreshToken);
-      return res.status(200).json(tokens);
+      return res.status(200).json({ data: tokens });
     } catch (err) {
       next(err);
     }
@@ -33,7 +33,8 @@ export class UsersController {
   /** 게시글 상세조회 API */
   getUser = async (req, res, next) => {
     try {
-      const userData = await this.usersService.getUser(req.locals.user);
+      const user = req.locals.user;
+      const userData = await this.usersService.getUser(user);
       return res.status(201).json({ data: userData });
     } catch (err) {
       next(err);

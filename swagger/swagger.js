@@ -17,7 +17,7 @@ export default {
   },
   servers: [
     {
-      url: "http://localhost:3018/",
+      url: "http://localhost:3018/api",
       description: "Local server",
     },
   ],

@@ -23,7 +23,7 @@ export class PostsController {
       const { userId } = req.locals.user;
 
       if (!title || !content) {
-        throw new Error("InvalidParamsError");
+        throw new Error("데이터 형식이 잘못되었습니다.");
       }
 
       const createdPost = await this.postsService.createPost(
@@ -42,7 +42,7 @@ export class PostsController {
     try {
       const { resumeId } = req.params;
       if (!resumeId) {
-        throw new Error("ValidationError");
+        throw new Error("이력서id를 입력해주세요");
       }
       const post = await this.postsService.findPostById(resumeId);
 
@@ -56,16 +56,17 @@ export class PostsController {
     try {
       const { resumeId } = req.params;
       const { title, content } = req.body;
+      const { userId } = req.locals.user;
 
-      if (!title || !content) {
-        throw new Error("ValidationError");
+      if (!title || !content || !resumeId) {
+        throw new Error("데이터 형식이 잘못되었습니다.");
       }
 
       const patchedPost = await this.postsService.updatePost(
         resumeId,
         title,
         content,
-        req.locals.user.userId
+        userId
       );
 
       return res.status(201).json({ data: patchedPost });
@@ -79,6 +80,9 @@ export class PostsController {
     try {
       const { resumeId } = req.params;
       const { userId } = req.locals.user;
+      if (!resumeId) {
+        throw new Error("데이터 형식이 잘못되었습니다.");
+      }
 
       const deletedPost = await this.postsService.deletePost(resumeId, userId);
 

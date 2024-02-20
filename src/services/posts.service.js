@@ -18,7 +18,7 @@ export class PostsService {
     );
 
     return {
-      postId: createdPost.postId,
+      resumeId: createdPost.resumeId,
       userId: createdPost.userId,
       title: createdPost.title,
       content: createdPost.content,
