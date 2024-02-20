@@ -1,13 +1,14 @@
 import { expect, jest } from "@jest/globals";
 import { UsersService } from "../../../src/services/users.service.js";
 import bcrypt from "bcrypt";
-// PostsRepository는 아래의 5개 메서드만 지원하고 있습니다.
+import jwt from "jsonwebtoken";
+
 let mockUsersRepository = {
   createUser: jest.fn(),
   getUserByEmail: jest.fn(),
+  getUserById: jest.fn(),
 };
 
-// postsService의 Repository를 Mock Repository로 의존성을 주입합니다.
 const usersService = new UsersService(mockUsersRepository);
 
 describe("Posts Service Unit Test", () => {
@@ -103,14 +104,24 @@ describe("Posts Service Unit Test", () => {
     };
     const accessToken = "mockAccessToken";
     const refreshToken = "mockRefreshToken";
+    const accessSecret = process.env.ACCESS_TOKEN_SECRET_KEY;
+    const refreshSecret = process.env.REFRESH_TOKEN_SECRET_KEY;
 
     mockUsersRepository.getUserByEmail.mockReturnValue(sampleUser);
+
     const bcryptCompare = jest.fn().mockResolvedValue(true);
     bcrypt.compare = jest.fn().mockImplementation(bcryptCompare);
 
+    const jwtSign = jest
+      .fn()
+      .mockReturnValueOnce("mockAccessToken")
+      .mockReturnValueOnce("mockRefreshToken");
+
+    jwt.sign = jwtSign;
+
     const tokens = await usersService.authenticateUser(
       sampleUser.email,
-      "password", // 비밀번호
+      sampleUser.password,
       "127.0.0.1",
       "jest-test"
     );
@@ -122,19 +133,58 @@ describe("Posts Service Unit Test", () => {
     expect(mockUsersRepository.getUserByEmail).toHaveBeenCalledWith(
       sampleUser.email
     );
+    expect(jwt.sign).toHaveBeenCalledTimes(2);
+    expect(jwt.sign).toHaveBeenCalledWith(
+      { userId: sampleUser.userId },
+      accessSecret,
+      {
+        expiresIn: "12h",
+      }
+    );
+    expect(jwt.sign).toHaveBeenCalledWith(
+      { userId: sampleUser.userId },
+      refreshSecret,
+      {
+        expiresIn: "7d",
+      }
+    );
 
     expect(bcrypt.compare).toHaveBeenCalledTimes(1);
     expect(bcrypt.compare).toHaveBeenCalledWith(
-      "password",
+      "hashedPassword",
       sampleUser.password
     );
   });
 
-  test("authenticateUser Method by Failure", async () => {
+  test("authenticateUser Method with Duplicate Email", async () => {
+    // 중복된 이메일을 가진 사용자가 이미 존재하는 경우를 테스트
     const sampleUser = {
       userId: "12345",
-      email: "test@example.com",
-      password: "hashedPassword", // 해싱된 비밀번호
+      email: "example@example.com",
+      password: "hashedPassword",
+    };
+
+    mockUsersRepository.getUserByEmail.mockReturnValue({});
+    const bcryptCompare = jest.fn().mockResolvedValue(true);
+    bcrypt.compare = jest.fn().mockImplementation(bcryptCompare);
+
+    try {
+      await usersService.authenticateUser(
+        sampleUser.email,
+        sampleUser.password,
+        "127.0.0.1",
+        "jest-test"
+      );
+    } catch (err) {
+      expect(err.message).toEqual("이미 중복된 이메일이 존재합니다.");
+    }
+  });
+
+  test("authenticateUser Method by password Failure", async () => {
+    const sampleUser = {
+      userId: "12345",
+      email: "example@example.com",
+      password: "hashedPassword",
     };
 
     mockUsersRepository.getUserByEmail.mockReturnValue(sampleUser);
@@ -144,7 +194,7 @@ describe("Posts Service Unit Test", () => {
     await expect(
       usersService.authenticateUser(
         sampleUser.email,
-        "wrongPassword", // 잘못된 비밀번호
+        "wrongPassword",
         "127.0.0.1",
         "jest-test"
       )
@@ -160,5 +210,45 @@ describe("Posts Service Unit Test", () => {
       "wrongPassword",
       sampleUser.password
     );
+  });
+  test("getUser Method with Existing User", async () => {
+    // 존재하는 사용자의 정보
+    const User = {
+      userId: "12345",
+      name: "이름입니다",
+      email: "example@example.com",
+      grade: "user",
+      createdAt: new Date().toString(),
+      updatedAt: new Date().toString(),
+    };
+
+    mockUsersRepository.getUserById.mockResolvedValue(User);
+
+    const userInfo = await usersService.getUser(User);
+
+    expect(userInfo).toEqual(User);
+
+    expect(mockUsersRepository.getUserById).toHaveBeenCalledTimes(1);
+    expect(mockUsersRepository.getUserById).toHaveBeenCalledWith(User);
+  });
+
+  test("getUser Method with Non-Existing User", async () => {
+    const User = {
+      userId: "12345",
+      name: "이름입니다.",
+      email: "example@example.com",
+      grade: "user",
+      createdAt: new Date().toString(),
+      updatedAt: new Date().toString(),
+    };
+
+    mockUsersRepository.getUserById.mockResolvedValue(null);
+
+    await expect(usersService.getUser(User)).rejects.toThrow(
+      "유저정보가 존재하지 않습니다."
+    );
+
+    expect(mockUsersRepository.getUserById).toHaveBeenCalledTimes(1);
+    expect(mockUsersRepository.getUserById).toHaveBeenCalledWith(User);
   });
 });
