@@ -1,21 +1,28 @@
+import dataSource from "../typeorm/index.js";
+dataSource.initialize();
+
 export class UsersRepository {
   constructor(prisma) {
     this.prisma = prisma;
   }
   getUserByEmail = async (email) => {
-    const user = await this.prisma.users.findFirst({
+    const user = await dataSource.getRepository("Users").findOne({
       where: { email },
     });
     return user;
   };
 
   createUser = async (name, email, password, grade) => {
-    const newUser = await this.prisma.users.create({
-      data: {
-        name,
+    await dataSource.getRepository("Users").insert({
+      name,
+      email,
+      password,
+      grade,
+      updatedAt: new Date(),
+    });
+    const newUser = await dataSource.getRepository("Users").findOne({
+      where: {
         email,
-        password,
-        grade,
       },
       select: {
         userId: true,
@@ -30,7 +37,8 @@ export class UsersRepository {
 
   getUserById = async (user) => {
     const { userId } = user;
-    const userInfo = await this.prisma.users.findFirst({
+
+    const userInfo = await dataSource.getRepository("Users").findOne({
       where: { userId },
       select: {
         userId: true,
@@ -40,6 +48,7 @@ export class UsersRepository {
         updatedAt: true,
       },
     });
+
     return userInfo;
   };
 }
