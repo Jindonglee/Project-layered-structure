@@ -16,7 +16,6 @@ model Users {
   createdAt     DateTime       @default(now()) @map("createdAt")
   updatedAt     DateTime       @updatedAt @map("updatedAt")
   grade         String         @default("user") @map("grade")
-  refreshTokens RefreshToken[]
   resume        Resume[]
 
   @@map("Users")
@@ -34,20 +33,6 @@ model Resume {
 
   @@index([userId], map: "Resume_userId_fkey")
   @@map("Resume")
-}
-
-model RefreshToken {
-  id        Int      @id @default(autoincrement())
-  token     String   @unique @db.VarChar(512)
-  userId    String   @map("userId")
-  ip        String?
-  userAgent String?  @map("userAgent")
-  createdAt DateTime @default(now()) @map("createdAt")
-  updatedAt DateTime @updatedAt @map("updatedAt")
-  User      Users    @relation(fields: [userId], references: [userId])
-
-  @@index([userId], map: "RefreshToken_userId_fkey")
-  @@map("RefreshToken")
 }
 
 enum Status {
