@@ -181,7 +181,7 @@ export default {
         },
       },
     },
-    "/resumes/posts": {
+    "/posts": {
       post: {
         tags: ["이력서 게시"],
         summary: "이력서 게시",
@@ -283,7 +283,7 @@ export default {
         },
       },
     },
-    "/resumes/posts/{resumeId}": {
+    "/posts/{resumeId}": {
       get: {
         tags: ["이력서 게시"],
         summary: "이력서 상세 정보 조회",

@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import redisClient from "../utils/redis/index.js";
 
 export class UsersService {
   // postsRepository = new PostsRepository();
@@ -55,6 +56,9 @@ export class UsersService {
       process.env.REFRESH_TOKEN_SECRET_KEY,
       { expiresIn: "7d" }
     );
+
+    await redisClient.set(refreshToken, user.userId);
+    await redisClient.expire(refreshToken, 604800);
 
     return { accessToken: accessToken, refreshToken: refreshToken };
   };

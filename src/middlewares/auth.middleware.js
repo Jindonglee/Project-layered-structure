@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { prisma } from "../utils/prisma/index.js";
+import redisClient from "../utils/redis/index.js";
 
 export default async function (req, res, next) {
   try {
@@ -12,25 +13,30 @@ export default async function (req, res, next) {
         throw new Error("Access Token 및 Refresh Token이 존재하지 않습니다.");
       }
 
-      let payload;
-
-      try {
-        payload = jwt.verify(
-          refreshToken,
-          process.env.REFRESH_TOKEN_SECRET_KEY
-        );
-      } catch (error) {
-        payload = null;
+      const userId = redisClient.get(refreshToken);
+      if (!userId) {
+        throw new Error("Refresh Token이 만료되었거나 잘못된 형식입니다.");
       }
 
-      if (!payload) {
-        return res
-          .status(401)
-          .json({ message: "Refresh Token이 정상적이지 않습니다." });
-      }
+      // let payload;
+
+      // try {
+      //   payload = jwt.verify(
+      //     refreshToken,
+      //     process.env.REFRESH_TOKEN_SECRET_KEY
+      //   );
+      // } catch (error) {
+      //   payload = null;
+      // }
+
+      // if (!payload) {
+      //   return res
+      //     .status(401)
+      //     .json({ message: "Refresh Token이 정상적이지 않습니다." });
+      // }
 
       const userInfo = await prisma.users.findFirst({
-        where: { userId: payload.userId },
+        where: { userId: userId },
       });
 
       const newAccessToken = jwt.sign(

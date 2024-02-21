@@ -2,6 +2,7 @@ import { expect, jest } from "@jest/globals";
 import { UsersService } from "../../../src/services/users.service.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import redisClient from "../../../src/utils/redis/index.js";
 
 let mockUsersRepository = {
   createUser: jest.fn(),
@@ -118,6 +119,8 @@ describe("Posts Service Unit Test", () => {
       .mockReturnValueOnce("mockRefreshToken");
 
     jwt.sign = jwtSign;
+    redisClient.set = jest.fn().mockResolvedValue(true);
+    redisClient.expire = jest.fn().mockResolvedValue(true);
 
     const tokens = await usersService.authenticateUser(
       sampleUser.email,
@@ -128,6 +131,15 @@ describe("Posts Service Unit Test", () => {
 
     expect(tokens.accessToken).toEqual(accessToken);
     expect(tokens.refreshToken).toEqual(refreshToken);
+
+    expect(redisClient.set).toHaveBeenCalledTimes(1);
+    expect(redisClient.set).toHaveBeenCalledWith(
+      refreshToken,
+      sampleUser.userId
+    );
+
+    expect(redisClient.expire).toHaveBeenCalledTimes(1);
+    expect(redisClient.expire).toHaveBeenCalledWith(refreshToken, 604800);
 
     expect(mockUsersRepository.getUserByEmail).toHaveBeenCalledTimes(1);
     expect(mockUsersRepository.getUserByEmail).toHaveBeenCalledWith(
@@ -167,7 +179,8 @@ describe("Posts Service Unit Test", () => {
     mockUsersRepository.getUserByEmail.mockReturnValue({});
     const bcryptCompare = jest.fn().mockResolvedValue(true);
     bcrypt.compare = jest.fn().mockImplementation(bcryptCompare);
-
+    redisClient.set = jest.fn().mockResolvedValue(true);
+    redisClient.expire = jest.fn().mockResolvedValue(true);
     try {
       await usersService.authenticateUser(
         sampleUser.email,
@@ -211,7 +224,7 @@ describe("Posts Service Unit Test", () => {
       sampleUser.password
     );
   });
-  test("getUser Method with Existing User", async () => {
+  test("getUser Method ", async () => {
     // 존재하는 사용자의 정보
     const User = {
       userId: "12345",
