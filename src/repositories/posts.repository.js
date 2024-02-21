@@ -1,12 +1,12 @@
+import dataSource from "../typeorm/index.js";
+dataSource.initialize();
+
 export class PostsRepository {
   constructor(prisma) {
     this.prisma = prisma;
   }
   findAllPosts = async (orderKey, orderValue) => {
-    const orderByOptions = orderKey
-      ? [{ [orderKey]: orderValue.toLowerCase() }]
-      : undefined;
-    const resumeList = await this.prisma.resume.findMany({
+    const resumeList = await dataSource.getRepository("Resume").find({
       select: {
         resumeId: true,
         title: true,
@@ -19,24 +19,23 @@ export class PostsRepository {
         createdAt: true,
         updatedAt: true,
       },
-      orderBy: orderByOptions,
+      order: { [orderKey]: orderValue.toLowerCase() },
     });
     return resumeList;
   };
 
   createPost = async (userId, title, content) => {
-    const createdPost = await this.prisma.resume.create({
-      data: {
-        userId,
-        title,
-        content,
-      },
+    const createdPost = await dataSource.getRepository("Resume").save({
+      userId,
+      title,
+      content,
+      updatedAt: new Date(),
     });
     return createdPost;
   };
 
   findPostById = async (resumeId) => {
-    const post = await this.prisma.resume.findUnique({
+    const post = await dataSource.getRepository("Resume").findOne({
       where: { resumeId: resumeId },
       select: {
         resumeId: true,
@@ -56,36 +55,19 @@ export class PostsRepository {
   };
 
   updatePost = async (resumeId, title, content, userId) => {
-    const patchedPost = await this.prisma.resume.update({
-      data: {
-        title: title,
-        content: content,
-      },
-      where: {
-        resumeId: resumeId,
-        userId: userId,
-      },
-      select: {
-        resumeId: true,
-        title: true,
-        content: true,
-        status: true,
-        user: {
-          select: {
-            name: true,
-          },
-        },
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const patchedPost = await dataSource
+      .getRepository("Resume")
+      .update(
+        { resumeId: resumeId, userId: userId },
+        { title: title, content: content }
+      );
     return patchedPost;
   };
 
   deletePost = async (resumeId, userId) => {
-    const deletedPost = await this.prisma.resume.delete({
-      where: { resumeId: resumeId, userId: userId },
-    });
+    const deletedPost = await dataSource
+      .getRepository("Resume")
+      .delete({ resumeId: resumeId, userId: userId });
     return deletedPost;
   };
 }

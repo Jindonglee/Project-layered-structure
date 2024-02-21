@@ -8,11 +8,11 @@ export default new EntitySchema({
   columns: {
     resumeId: {
       primary: true,
-      type: "int",
-      generated: true,
+      type: "uuid",
+      generated: "uuid",
     },
     userId: {
-      type: "int",
+      type: "uuid",
     },
     title: {
       type: "varchar",
@@ -31,7 +31,7 @@ export default new EntitySchema({
     },
   },
   relations: {
-    users: {
+    user: {
       target: "Users",
       type: "many-to-one",
       joinTable: true,
