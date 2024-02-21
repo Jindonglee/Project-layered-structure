@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "../swagger/swagger.js";
+import cors from "cors";
 
 dotenv.config();
 
@@ -13,6 +14,16 @@ const PORT = 3018;
 
 app.use(express.json());
 app.use(cookieParser());
+
+const URL = process.env.CORS_URL;
+const corsOptions = {
+  origin: URL,
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/api", router);
