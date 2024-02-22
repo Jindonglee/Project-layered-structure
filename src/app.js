@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "../swagger/swagger.js";
 import cors from "cors";
+import slackbot from "./middlewares/slackbot.middleware.js";
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use(slackbot);
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/api", router);
