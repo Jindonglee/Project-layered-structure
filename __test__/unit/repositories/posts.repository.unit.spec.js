@@ -1,18 +1,29 @@
 import { jest } from "@jest/globals";
 import { PostsRepository } from "../../../src/repositories/posts.repository";
 
-// Prisma 클라이언트에서는 아래 5개의 메서드만 사용합니다.
-let mockPrisma = {
-  resume: {
-    findMany: jest.fn(),
-    findUnique: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-  },
+const mockResume = {
+  find: jest.fn(),
+  findOne: jest.fn(),
+  save: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
 };
+const mockDataSource = {
+  getRepository: jest.fn().mockReturnValue(mockResume),
+};
+// const dataSource = jest.mock("typeorm", () => ({
+//   getRepository: jest.fn().mockImplementation((entityName) => {
+//     // 원하는 엔티티명에 따라서 적절한 모의 객체 반환
+//     switch (entityName) {
+//       case "Resume":
+//         return mockResume;
+//       default:
+//         return jest.fn();
+//     }
+//   }),
+// }));
 
-let postsRepository = new PostsRepository(mockPrisma);
+let postsRepository = new PostsRepository(mockDataSource);
 
 describe("Posts Repository Unit Test", () => {
   beforeEach(() => {
@@ -45,7 +56,9 @@ describe("Posts Repository Unit Test", () => {
     ];
 
     // Prisma의 findMany 메서드를 설정하여 가짜 데이터를 반환하도록 함
-    postsRepository.prisma.resume.findMany.mockResolvedValue(ResumeList);
+    postsRepository.dataSource
+      .getRepository("Resume")
+      .find.mockResolvedValue(ResumeList);
 
     // findAllPosts 메서드 호출
     const result = await postsRepository.findAllPosts("createdAt", "desc");
@@ -54,10 +67,14 @@ describe("Posts Repository Unit Test", () => {
     expect(result).toEqual(ResumeList);
 
     // Prisma의 findMany 메서드가 한 번 호출되었는지 확인
-    expect(postsRepository.prisma.resume.findMany).toHaveBeenCalledTimes(1);
+    expect(
+      postsRepository.dataSource.getRepository("Resume").find
+    ).toHaveBeenCalledTimes(1);
 
     // Prisma의 findMany 메서드가 올바른 인자로 호출되었는지 확인
-    expect(postsRepository.prisma.resume.findMany).toHaveBeenCalledWith({
+    expect(
+      postsRepository.dataSource.getRepository("Resume").find
+    ).toHaveBeenCalledWith({
       select: {
         resumeId: true,
         title: true,

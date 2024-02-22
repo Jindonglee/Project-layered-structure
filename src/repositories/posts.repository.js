@@ -2,8 +2,8 @@ import dataSource from "../typeorm/index.js";
 dataSource.initialize();
 
 export class PostsRepository {
-  constructor(prisma) {
-    this.prisma = prisma;
+  constructor(dataSource) {
+    this.dataSource = dataSource;
   }
   findAllPosts = async (orderKey, orderValue) => {
     const resumeList = await dataSource.getRepository("Resume").find({

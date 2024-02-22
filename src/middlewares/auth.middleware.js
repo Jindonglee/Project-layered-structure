@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
-import { prisma } from "../utils/prisma/index.js";
 import redisClient from "../utils/redis/index.js";
+import dataSource from "../typeorm/index.js";
+dataSource.initialize();
 
 export default async function (req, res, next) {
   try {
@@ -18,24 +19,7 @@ export default async function (req, res, next) {
         throw new Error("Refresh Token이 만료되었거나 잘못된 형식입니다.");
       }
 
-      // let payload;
-
-      // try {
-      //   payload = jwt.verify(
-      //     refreshToken,
-      //     process.env.REFRESH_TOKEN_SECRET_KEY
-      //   );
-      // } catch (error) {
-      //   payload = null;
-      // }
-
-      // if (!payload) {
-      //   return res
-      //     .status(401)
-      //     .json({ message: "Refresh Token이 정상적이지 않습니다." });
-      // }
-
-      const userInfo = await prisma.users.findFirst({
+      const userInfo = await dataSource.getRepository("Users").findOne({
         where: { userId: userId },
       });
 
@@ -46,7 +30,7 @@ export default async function (req, res, next) {
           expiresIn: "12h",
         }
       );
-      const user = await prisma.users.findFirst({
+      const user = await dataSource.getRepository("Users").findOne({
         where: { userId: userInfo.userId },
       });
 
@@ -65,7 +49,7 @@ export default async function (req, res, next) {
       );
       const userId = decodedToken.userId;
 
-      const user = await prisma.users.findFirst({
+      const user = await dataSource.getRepository("Users").findOne({
         where: { userId: userId },
       });
 
