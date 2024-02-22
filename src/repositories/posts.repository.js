@@ -6,6 +6,15 @@ export class PostsRepository {
     this.dataSource = dataSource;
   }
   findAllPosts = async (orderKey, orderValue) => {
+    const randomNumber = Math.floor(Math.random() * 6);
+    console.log(randomNumber);
+
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, randomNumber * 1000);
+    });
+
     const resumeList = await dataSource.getRepository("Resume").find({
       select: {
         resumeId: true,

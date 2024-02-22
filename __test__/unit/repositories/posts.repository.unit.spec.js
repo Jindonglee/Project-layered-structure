@@ -8,10 +8,8 @@ const mockResume = {
   update: jest.fn(),
   delete: jest.fn(),
 };
-const mockDataSource = {
-  getRepository: jest.fn().mockReturnValue(mockResume),
-};
-// const dataSource = jest.mock("typeorm", () => ({
+
+// const mockDataSource = jest.mock("typeorm", () => ({
 //   getRepository: jest.fn().mockImplementation((entityName) => {
 //     // 원하는 엔티티명에 따라서 적절한 모의 객체 반환
 //     switch (entityName) {
@@ -22,6 +20,16 @@ const mockDataSource = {
 //     }
 //   }),
 // }));
+
+const mockDataSource = {
+  getRepository: {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    save: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+};
 
 let postsRepository = new PostsRepository(mockDataSource);
 
@@ -56,9 +64,7 @@ describe("Posts Repository Unit Test", () => {
     ];
 
     // Prisma의 findMany 메서드를 설정하여 가짜 데이터를 반환하도록 함
-    postsRepository.dataSource
-      .getRepository("Resume")
-      .find.mockResolvedValue(ResumeList);
+    postsRepository.dataSource.getRepository.find.mockResolvedValue(ResumeList);
 
     // findAllPosts 메서드 호출
     const result = await postsRepository.findAllPosts("createdAt", "desc");

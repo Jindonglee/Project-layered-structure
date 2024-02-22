@@ -12,7 +12,7 @@ const sendTodayData = async (req, res, next) => {
       console.log("api-finish", end - start);
 
       if (end - start > 3000) {
-        const message = "api가 느려요.";
+        const message = `api가 느려요 ${end - start}ms 가 걸렸어요`;
         await slackBot.chat.postMessage({
           channel: channel,
           text: message,
